@@ -37,6 +37,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.Action;
+import javax.xml.catalog.Catalog;
+import javax.xml.catalog.CatalogException;
 
 //java --module-path "C:\javafx-sdk-18\lib" --add-modules javafx.controls,javafx.fxml Home
 //set classpath=D:\mysql-connector-java-8.0.28.jar;.;
@@ -64,6 +66,7 @@ public class Home extends Application {
         boolean flag = true;
         
         try {
+            Font f2 = new Font("Calibri", 20);
             Class.forName("com.mysql.jdbc.Driver");  
             Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/DEBOPAM", "root","debopam03");        
             Statement stmt1 = con.createStatement();
@@ -155,10 +158,10 @@ public class Home extends Application {
                 }
 
             }
-            else {
+            /*else {
                 uname = uid;
                 this.pwd = pwd; 
-            }
+            }*/
             con.close();
         }
         catch (Exception e) {
@@ -166,10 +169,12 @@ public class Home extends Application {
         }
         return flag;
     }
-
+    
     public void start(Stage home) {
         try {
-
+            
+            Font f = new Font("Calibri", 30);
+            Tab t2 = new Tab("Upcoming Appointments");
         TabPane pane = new TabPane();
         pane.setPrefSize(1920/1.25, 1080/1.25);
         Scene sc = new Scene(pane, 1920 / 1.25, 1080 / 1.25);
@@ -185,17 +190,20 @@ public class Home extends Application {
         HBox hb1 = new HBox(30);
         HBox hb2 = new HBox(30) ;
         submit_button = new Button("Submit");
-
+        Button newregb = new Button("New User? Register Here");
+        newregb.setAlignment(Pos.CENTER);
         hb1.setAlignment(Pos.CENTER);
-
+        
+        Font f3 = new Font("Calibri", 15.0);
         hb2.setAlignment(Pos.CENTER);
 
         Form=new VBox(20);
         Form.setMinSize(1920 / 1.25, 1080 / 1.25);
         Form.setAlignment(Pos.TOP_CENTER);
 
-        TabPane tabpane=new TabPane();
-        Tab tab1=new Tab("Login Page");
+        Font f2 = new Font("Calibri", 20.0);
+        //TabPane tabpane=new TabPane();
+        //Tab tab1=new Tab("Login Page");
 
         hb1.getChildren().add(username_label);
         hb1.getChildren().add(username);
@@ -206,10 +214,11 @@ public class Home extends Application {
         Form.getChildren().add(hb1);
         Form.getChildren().add(hb2);
         Form.getChildren().add(submit_button);
+        Form.getChildren().add(newregb);
         ScrollPane sp3 = new ScrollPane(Form);
         
-        tab1.setContent(sp3);
-        tabpane.getTabs().add(tab1);
+        //tab1.setContent(sp3);
+        //tabpane.getTabs().add(tab1);
 
         uid = new TextField();
         eid = new TextField();
@@ -219,7 +228,7 @@ public class Home extends Application {
         Label pwd1_label = new Label("Password: ");
         
         //uid_label.setPrefSize(arg0, arg1);
-
+        VBox i3 = new VBox();
 
         HBox hb3 = new HBox(uid_label, uid);
         HBox hb4 = new HBox(eid_label, eid);
@@ -238,20 +247,44 @@ public class Home extends Application {
         
         Button reg = new Button("SUBMIT");
         reg.setAlignment(Pos.CENTER);
-
+        EventHandler<ActionEvent> regCheck = new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent e) {
+                try {
+                    String place = place_list.getValue().toString();
+                    String passw = Home.this.pwd1.getText();
+                    Register(uid.getText(), eid.getText(), place, passw);
+                    
+            }
+            catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }; 
+        reg.setOnAction(regCheck);
+        Button logpage = new Button("Return to Login Page");
+        logpage.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent e)   {
+                try {
+                    home.setScene(scene);
+                }
+                catch (Exception e2) {
+                    e2.printStackTrace();
+                }
+            }
+        });
         second_window_vb.setAlignment(Pos.TOP_CENTER);
-        second_window_vb.getChildren().addAll(new Label(""), second_window_hb, new Label(""), reg);
+        second_window_vb.getChildren().addAll(new Label(""), second_window_hb, new Label(""), reg, new Label(""), logpage);
         
         
-
-        Tab tab2 = new Tab("Register");
+        VBox w3 = new VBox();
+        //Tab tab2 = new Tab("Register");
         second_window_hb.setAlignment(Pos.CENTER);
         second_window_vb.setPrefSize(1920/1.25, 1080/1.25);
-        tab2.setContent(new ScrollPane(second_window_vb));
-        tabpane.getTabs().add(tab2);
-
+        //tab2.setContent(new ScrollPane(second_window_vb));
+        //tabpane.getTabs().add(tab2);
+        Scene regsc = new Scene(new ScrollPane(second_window_vb));
         
-        scene = new Scene(tabpane,1920/1.25,1080/1.25);
+        scene = new Scene(sp3,1920/1.25,1080/1.25);
         home.setScene(scene);
         home.setTitle("LOGIN PAGE");
         home.show();
@@ -260,10 +293,105 @@ public class Home extends Application {
         EventHandler<ActionEvent> homepage = new EventHandler<ActionEvent>() {
             public void handle(ActionEvent e) {
                 try {
+                    uname = username.getText();
+                    if (Login(username.getText(), password.getText())) {
+                        Class.forName("com.mysql.jdbc.Driver");  
+                        Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/DEBOPAM", "root","debopam03");
+                    
+        Statement stmt = con.createStatement();
+        System.out.println(uname);
+        ResultSet rs2 = stmt.executeQuery("SELECT * FROM APPOINTMENT WHERE (CUST_UID = '" + uname + "' AND APP_DATE > CURDATE());");
+        Label success = new Label();
+        Border br = new Border(
+                new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY,
+                        new BorderWidths(2)));
+        w3.getChildren().add(success);
+        if (rs2.next()) {
+            success.setText("UPCOMING APPOINTMENTS:");
+            success.setAlignment(Pos.CENTER);
+            success.setFont(f);
+
+                            List<HBox> hbl = new ArrayList<>();
+                            System.out.println("SELECT * FROM DOCTORS WHERE UID = " + rs2.getInt(2) + ";");
+                            Statement stmt1 = con.createStatement();
+                            ResultSet rs9 = stmt1.executeQuery("SELECT * FROM DOCTORS WHERE UID = " + rs2.getInt(2) + ";");
+                            rs9.next();
+                            System.out.println(rs9.getString(2));
+            Label r1 = new Label(rs9.getString(2)), r2 = new Label(rs2.getString(3));
+            r1.setPrefSize(300, 10);
+            r2.setPrefSize(300, 10);
+            r1.setFont(f3);
+            r2.setFont(f3);
+                            r1.setBorder(br);
+            r2.setBorder(br);
+            hbl.add(new HBox(r1, r2));
+            
+                            while (rs2.next()) {
+                                rs9 = stmt1.executeQuery("SELECT * FROM DOCTORS WHERE UID = " + rs2.getInt(2) + ";");
+                                rs9.next();
+                r1 = new Label(rs9.getString(2));
+                r2 = new Label(rs2.getString(3));
+                r1.setPrefSize(300, 10);
+                r2.setPrefSize(300, 10);
+                r1.setFont(f3);
+                r2.setFont(f3);
+                                r1.setBorder(br);
                 
-                if(Login(username.getText(), password.getText()))    {
-                    home.setScene(sc);
-                    home.setTitle("Home");
+                                r2.setBorder(br);
+                hbl.add(new HBox(r1, r2));
+            }
+            Iterator<HBox> ith = hbl.iterator();
+            while (ith.hasNext()) {
+                w3.getChildren().add(ith.next());
+            }
+        }
+                        else {
+                            success.setText("NO UPCOMING APPOINTMENTS");
+                            success.setFont(f);
+                        }
+                        ResultSet rs3 = stmt.executeQuery("SELECT * FROM APPOINTMENT WHERE (CUST_UID = '" + uname + "' AND APP_DATE < CURDATE());");
+                        if (rs3.next()) {
+                            success = new Label("APPOINTMENTS HISTORY:");
+                            success.setAlignment(Pos.CENTER);
+                            success.setFont(f);
+                
+                            List<HBox> hbl = new ArrayList<>();
+                            Label r1 = new Label(rs3.getString(2)), r2 = new Label(rs3.getString(3));
+                            r1.setPrefSize(300, 10);
+                            r2.setPrefSize(300, 10);
+                            r1.setFont(f3);
+                            r2.setFont(f3);
+                            r1.setBorder(br);
+                            r2.setBorder(br);
+                            hbl.add(new HBox(r1, r2));
+                
+                            while (rs3.next()) {
+                                r1 = new Label(rs3.getString(2));
+                                r2 = new Label(rs3.getString(3));
+                                r1.setPrefSize(300, 10);
+                                r2.setPrefSize(300, 10);
+                                r1.setFont(f3);
+                                r2.setFont(f3);
+                                r1.setBorder(br);
+                                
+                                r2.setBorder(br);
+                                hbl.add(new HBox(r1, r2));
+                            }
+                            Iterator<HBox> ith = hbl.iterator();
+                            i3.getChildren().add(success);
+                            while (ith.hasNext()) {
+                                i3.getChildren().add(ith.next());
+                            }
+                        }
+                        else {
+                            success = new Label("NO PREVIOUS APPOINTMENTS");
+                            success.setFont(f);
+                            
+                            i3.getChildren().add(success);
+                        }
+                        home.setScene(sc);
+                        home.setTitle("Home");
+                
                 }
                 }
             catch (Exception e1) {
@@ -271,21 +399,23 @@ public class Home extends Application {
                 }
             }
         };
-        EventHandler<ActionEvent> regCheck = new EventHandler<ActionEvent>() {
+        EventHandler<ActionEvent> newreg = new EventHandler<ActionEvent>() {
             public void handle(ActionEvent e) {
                 try {
-                    String place = place_list.getValue().toString();
-                    String passw = Home.this.pwd1.getText();
-                Register(uid.getText(), eid.getText(), place, passw);
+                    home.setScene(regsc);
                 }
             catch (Exception e1) {
                     e1.printStackTrace();
                 }
             }
-        }; 
-
+        };
         submit_button.setOnAction(homepage);
-        reg.setOnAction(regCheck);
+        /*EventHandler<ActionEvent> homepage = new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent e) {
+            }
+        }*/
+
+        
             
         
         Button l[] = new Button[8];
@@ -314,7 +444,7 @@ public class Home extends Application {
         la[7] = new Label("Gastroenterologist".toUpperCase());
         
         
-        Font f3 = new Font("Calibri", 15.0);
+        
 
         for (int i = 0; i < 8; i++) {
             la[i].setFont(f3);
@@ -353,6 +483,8 @@ public class Home extends Application {
         vb1.setAlignment(Pos.CENTER);
         vb2.setAlignment(Pos.CENTER);
         
+        newregb.setOnAction(newreg);
+
         List<EventHandler<ActionEvent>> event = new ArrayList<>(); 
         for (int i = 0; i < 8; i++) {
             final int iii = i;
@@ -383,7 +515,7 @@ public class Home extends Application {
                     
                     List<Label> rating = new ArrayList<>();
                     
-                    Font f2 = new Font("Calibri", 20);
+                    
                         
                     Border br = new Border(
                         new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY,
@@ -394,7 +526,7 @@ public class Home extends Application {
                             name.get(name.size() - 1).setBorder(br);
                             name.get(name.size() - 1).setPrefSize(300, 10);
 
-                            city.add(new Label("" + rs.getString(4)));
+                            city.add(new Label("" + rs.getString(3)));
                             city.get(city.size() - 1).setFont(f2);
                             city.get(city.size() - 1).setBorder(br);
                             city.get(name.size() - 1).setPrefSize(300, 10);
@@ -404,7 +536,6 @@ public class Home extends Application {
                             rating.get(rating.size() - 1).setBorder(br);
                             rating.get(name.size() - 1).setPrefSize(300, 10);
                         }
-                        
                         Label namecol = new Label("NAME"), citycol = new Label("CITY"), ratingcol = new Label("RATING");
                         namecol.setFont(f2);
                         citycol.setFont(f2);
@@ -456,20 +587,42 @@ public class Home extends Application {
                         ComboBox combo_box =
                                 new ComboBox(FXCollections.observableList(name_str));
                         combo_box.setValue(name_str.get(0));
-                        Button submit = new Button("SUBMIT");
+                        Button submit = new Button("APPLY");
 
                         EventHandler<ActionEvent> arg0 = new EventHandler<ActionEvent>() {
                             public void handle(ActionEvent e) {
-                                Label success = new Label("APPOINTMENT SUCCESSFUL!");
-                                success.setFont(f);
-                                Border br1 = new Border(
-                        new BorderStroke(Color.GREEN, BorderStrokeStyle.SOLID, CornerRadii.EMPTY,
+                                try {Class.forName("com.mysql.jdbc.Driver");  
+                                Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/DEBOPAM", "root","debopam03");
+                    
+                                Statement stmt = con.createStatement();
+                                ResultSet rs2 = stmt.executeQuery("SELECT * FROM APPOINTMENT WHERE (CUST_UID = '" + uname + "' AND DOC_UID = '" + combo_box.getValue() + "' AND APP_DATE > CURDATE());");
+                                Label success;
+                                if(!rs2.next())  {
+
+                                        System.out.print(combo_box.getValue());
+                                        ResultSet rs7 = stmt.executeQuery(
+                                                "SELECT * FROM DOCTORS WHERE NAME = '" + combo_box.getValue() + "';");
+                                        rs7.next();
+                                                int f = rs7.getInt(1);
+                                stmt.executeUpdate("INSERT INTO APPOINTMENT VALUES('" + uname + "', " + f + ", DATE_ADD(CURDATE(), INTERVAL 3 DAY));");
+                                
+                                        success = new Label("APPOINTMENT SUCCESSFUL!");
+                                }
+                                else{
+                                    success = new Label("APPOINTMENT ALREADY EXISTS! TRY AGAIN");
+                                }
+                                    success.setFont(f);
+                                    Border br1 = new Border(
+                                    new BorderStroke(Color.GREEN, BorderStrokeStyle.SOLID, CornerRadii.EMPTY,
                                 new BorderWidths(2)));
                                 success.setBorder(br1);
                                 success.setAlignment(Pos.CENTER);
                                 vb.getChildren().addAll(new Label(" "), success);
                                 submit.setDisable(true);
-                                
+                            }
+                            catch (Exception e2) {
+                                e2.printStackTrace();
+                            }
                                 
                             }
                         };
@@ -483,7 +636,8 @@ public class Home extends Application {
                     Button back = new Button("RETURN TO HOME PAGE");
                     EventHandler<ActionEvent> arg1 = new EventHandler<ActionEvent>() {
                         public void handle(ActionEvent e)   {
-                            home.setScene(sc);
+                                home.setScene(sc);
+                                home.getScene().getWindow().setWidth(home.getScene().getWidth() + 0.001);
                         }
                     };
                         back.setOnAction(arg1);
@@ -513,18 +667,43 @@ public class Home extends Application {
             ii++;
         }
         
-        Font f = new Font("Calibri", 30.0);
+        
         HBox hb = new HBox(vb1, vb2);
         hb.setAlignment(Pos.CENTER);
         Label l_head = new Label("WELCOME TO THE PORTAL");
+        Button btt = new Button("Log Out");
+        btt.setOnAction(new EventHandler<ActionEvent>() {
+                
+                public void handle(ActionEvent e) {
+                    try {
+                        
+                    home.setScene(scene);
+                    uid.setText("");
+                    pwd1.setText("");
+                    username.setText("");
+                    password.setText("");
+                    eid.setText("");
+                    place_list.setValue("--select--");
+                    }
+                    catch(Exception e2) {
+
+                    }
+
+                }
+
+            }
         
+        );
+        HBox hb10 = new HBox(new Label("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"), btt);
         l_head.setFont(f);
-        Font f2 = new Font("Calibri", 20.0);
+        btt.setAlignment(Pos.CENTER_RIGHT);
+
+        hb10.setAlignment(Pos.CENTER);
         Label pick = new Label("PICK YOUR DESIRED SERVICE");
         pick.setFont(f2);
         l_head.setAlignment(Pos.CENTER);
         pick.setAlignment(Pos.CENTER);
-        VBox vb3 = new VBox(l_head, pick, hb);
+        VBox vb3 = new VBox(hb10, l_head, pick, hb);
         vb3.setAlignment(Pos.TOP_CENTER);
         
         vb3.setPrefSize(1920/1.25, 1080/1.25);
@@ -534,8 +713,96 @@ public class Home extends Application {
         
         Tab t1 = new Tab("Make an Appointment");
         t1.setContent(sp);
-        Tab t2 = new Tab("Current Appointments");
+        ScrollPane sp2 = new ScrollPane();
+        Label h5 = new Label("LIST OF APPOINTMENTS");
+        h5.setFont(f);
+        h5.setAlignment(Pos.CENTER);
+
+        VBox vb5 = new VBox(h5);
+        sp2.setContent(vb5);          
+        /*Statement stmt = con.createStatement();
+        System.out.println(uname);
+        ResultSet rs2 = stmt.executeQuery("SELECT * FROM APPOINTMENT WHERE (CUST_UID = '" + uname + "' AND APP_DATE > CURDATE());");
+        Label success = new Label();
+        Border br = new Border(
+            new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY,
+                    new BorderWidths(2)));
+        VBox w3 = new VBox();
+        w3.getChildren().add(success);
+        if (rs2.next()) {
+        success.setText("UPCOMING APPOINTMENTS:");
+        success.setAlignment(Pos.CENTER);
+        success.setFont(f);
+        
+        List<HBox> hbl = new ArrayList<>();
+        Label r1 = new Label(rs2.getString(2)), r2 = new Label(rs2.getString(3));
+        r1.setPrefSize(300, 10);
+        r2.setPrefSize(300, 10);
+        r1.setFont(f3);
+        r2.setFont(f3);
+        r1.setBorder(br);
+        hbl.add(new HBox(r1, r2));
+        
+        while (rs2.next()) {
+            r1 = new Label(rs2.getString(2));
+            r2 = new Label(rs2.getString(3));
+            r1.setPrefSize(300, 10);
+            r2.setPrefSize(300, 10);
+            r1.setFont(f3);
+            r2.setFont(f3);
+            r1.setBorder(br);
+            hbl.add(new HBox(r1, r2));
+        }
+        Iterator<HBox> ith = hbl.iterator();
+        while (ith.hasNext()) {
+            w3.getChildren().add(ith.next());
+        }
+        }
+        else {
+        success.setText("NO UPCOMING APPOINTMENTS");
+        success.setFont(f);
+        }
+        */
+        
+        /*ResultSet rs3 = stmt.executeQuery("SELECT * FROM APPOINTMENT WHERE (CUST_UID = '" + uname + "' AND APP_DATE < CURDATE());");
+        if (rs3.next()) {
+            success = new Label("APPOINTMENTS HISTORY:");
+            success.setAlignment(Pos.CENTER);
+            success.setFont(f);
+
+            List<HBox> hbl = new ArrayList<>();
+            Label r1 = new Label(rs3.getString(2)), r2 = new Label(rs3.getString(3));
+            r1.setPrefSize(300, 10);
+            r2.setPrefSize(300, 10);
+            r1.setFont(f3);
+            r2.setFont(f3);
+            r1.setBorder(br);
+            hbl.add(new HBox(r1, r2));
+
+            while (rs3.next()) {
+                r1 = new Label(rs3.getString(2));
+                r2 = new Label(rs3.getString(3));
+                r1.setPrefSize(300, 10);
+                r2.setPrefSize(300, 10);
+                r1.setFont(f3);
+                r2.setFont(f3);
+                r1.setBorder(br);
+                hbl.add(new HBox(r1, r2));
+            }
+            Iterator<HBox> ith = hbl.iterator();
+            while (ith.hasNext()) {
+                i3.getChildren().add(ith.next());
+            }
+        }
+        else {
+            success = new Label("NO PREVIOUS APPOINTMENTS");
+            success.setFont(f);
+        }*/
+        
+        
         Tab t3 = new Tab("Previous Appointments");
+        t2.setContent(new ScrollPane(w3));
+        t3.setContent(new ScrollPane(i3));
         pane.getTabs().addAll(t1, t2, t3);
 
         
